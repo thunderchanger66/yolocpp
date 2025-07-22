@@ -30,7 +30,7 @@ int main() {
     int fps = cap.get(cv::CAP_PROP_FPS);
 
     // 初始化 YOLOv11 推理器
-    std::string engine_path = "/home/thunder/yolocpp/models/nice.plan";  // 替换为你的 engine 路径
+    std::string engine_path = "/home/thunder/yolocpp/models/com.plan";  // 替换为你的 engine 路径
     YoloDetector detector(engine_path, 0, 0.45, 0.5);  // device_id=0, conf_thresh=0.45, iou_thresh=0.5
 
     // 初始化 ByteTrack 跟踪器
