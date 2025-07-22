@@ -25,16 +25,16 @@ int main() {
         return -1;
     }
 
-    int img_w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-    int img_h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-    int fps = cap.get(cv::CAP_PROP_FPS);
+    // int img_w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+    // int img_h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+    // int fps = cap.get(cv::CAP_PROP_FPS);
 
     // 初始化 YOLOv11 推理器
     std::string engine_path = "/home/thunder/yolocpp/models/nice.plan";  // 替换为你的 engine 路径
     YoloDetector detector(engine_path, 0, 0.45, 0.01);  // device_id=0, conf_thresh=0.45, iou_thresh=0.01
 
     // 初始化 ByteTrack 跟踪器
-    BYTETracker tracker(fps, 30);  // 允许丢失 30 帧
+    BYTETracker tracker(30, 30);  // 允许丢失 30 帧
 
     cv::Mat frame;
     int frame_id = 0;
@@ -67,6 +67,7 @@ int main() {
 
         // // 跟踪
         // std::vector<STrack> tracks = tracker.update(objects);
+        std::vector<Object> objects;
         if (!detections.empty()) {
             // 寻找置信度最高的检测框
             const auto& best_det = *std::max_element(
@@ -80,18 +81,18 @@ int main() {
             cv::Rect_<float> rect(best_det.bbox[0], best_det.bbox[1],
                                 best_det.bbox[2] - best_det.bbox[0],
                                 best_det.bbox[3] - best_det.bbox[1]);
-            std::vector<Object> objects{ Object{rect, best_det.classId, best_det.conf} };
-            
-            // 更新跟踪
-            std::vector<STrack> tracks = tracker.update(objects);
-            // 后续串口发送、绘图、坐标计算都只处理 tracks[0]
-            if (!tracks.empty()) {
-                auto tlwh = tracks[0].tlwh;
-                float center_x = tlwh[0] + tlwh[2] / 2.0f;
-                char buffer[64];
-                int len = snprintf(buffer, sizeof(buffer), "C %.2f\n", center_x);
-                serial.writeData(buffer, len);
-            }
+            //std::vector<Object> objects{ Object{rect, best_det.classId, best_det.conf} };
+            objects.emplace_back(Object{rect, best_det.classId, best_det.conf});
+        }      
+        // 更新跟踪
+        std::vector<STrack> tracks = tracker.update(objects);
+        // 后续串口发送、绘图、坐标计算都只处理 tracks[0]
+        if (!tracks.empty()) {
+            auto tlwh = tracks[0].tlwh;
+            float center_x = tlwh[0] + tlwh[2] / 2.0f;
+            char buffer[64];
+            int len = snprintf(buffer, sizeof(buffer), "C %.2f\n", center_x);
+            serial.writeData(buffer, len);
         }
 
         // for(const auto& track : tracks)
