@@ -84,14 +84,14 @@ int main() {
             
             // 更新跟踪
             std::vector<STrack> tracks = tracker.update(objects);
-            
             // 后续串口发送、绘图、坐标计算都只处理 tracks[0]
-            auto tlwh = tracks[0].tlwh;
-            float center_x = tlwh[0] + tlwh[2] / 2.0f;
-            //发送中心信息
-            char buffer[64];
-            int len = snprintf(buffer, sizeof(buffer), "C %.2f\n", center_x);
-            serial.writeData(buffer, len);
+            if (!tracks.empty()) {
+                auto tlwh = tracks[0].tlwh;
+                float center_x = tlwh[0] + tlwh[2] / 2.0f;
+                char buffer[64];
+                int len = snprintf(buffer, sizeof(buffer), "C %.2f\n", center_x);
+                serial.writeData(buffer, len);
+            }
         }
 
         // for(const auto& track : tracks)
