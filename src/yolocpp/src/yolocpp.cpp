@@ -29,5 +29,4 @@ YoloCpp::YoloCpp() : rclcpp::Node("yolo_cpp")
     detector = std::make_unique<YoloDetector>(engine_path, 0, 0.45, 0.5);// device_id=0, conf_thresh=0.45, iou_thresh=0.5
     //初始化ByteTrack跟踪器
     tracker = std::make_unique<BYTETracker>(fps, 30);
-
 }

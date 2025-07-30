@@ -11,28 +11,21 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(OpenCV REQUIRED)
 
+#eigen3
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
 # ============= cuda ============
-find_package(CUDA REQUIRED)
 include_directories(/usr/local/cuda/include)
 link_directories(/usr/local/cuda/lib64)
-# ============= tensorrt ============
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  message("Embed_platform on")
-  include_directories(/usr/include/aarch64-linux-gnu)
-  link_directories(/usr/lib/aarch64-linux-gnu)
-else()
-  message("Embed_platform off")
-  include_directories(/usr/include/x86_64-linux-gnu)
-  link_directories(/usr/lib/x86_64-linux-gnu)
-endif()
 
 include_directories(
-  ../libs/cppyolo/detect/include
-  ../libs/cppyolo/bytetrack/include
+  ~/yolocpp/libs/cppyolo/detect/include
+  ~/yolocpp/libs/cppyolo/bytetrack/include
   include
 )
 link_directories(
-  ../libs/cppyolo/build
+  ~/yolocpp/libs/cppyolo/build
 )
 
 add_executable(yolocpp 
@@ -44,9 +37,6 @@ target_link_libraries(yolocpp
   bytetrack
   yolo_infer
   ${OpenCV_LIBS}
-  # nvinfer 
-  # cudart 
-  # nvonnxparser
 )
 
 ament_target_dependencies(yolocpp
