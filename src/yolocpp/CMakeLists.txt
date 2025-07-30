@@ -19,6 +19,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(/usr/local/cuda/include)
 link_directories(/usr/local/cuda/lib64)
 
+#yolo and track library
 include_directories(
   ~/yolocpp/libs/cppyolo/detect/include
   ~/yolocpp/libs/cppyolo/bytetrack/include
