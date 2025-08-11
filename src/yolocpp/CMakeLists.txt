@@ -34,6 +34,7 @@ link_directories(
 add_executable(yolocpp 
   src/yolocpp.cpp 
   src/yolocppnode.cpp
+  src/PID.cpp
 )
 
 target_link_libraries(yolocpp
@@ -50,6 +51,11 @@ ament_target_dependencies(yolocpp
 
 install(TARGETS yolocpp
   DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
