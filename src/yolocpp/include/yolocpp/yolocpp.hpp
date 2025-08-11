@@ -32,16 +32,12 @@ private:
     std::unique_ptr<serial::Serial> my_serial;//串口
     std::string serial_port;//串口参数
 
-    //系统延迟
-    float system_delay;
-    double kp, ki, kd, kf, alpha, omin, omax;//PID参数
+    float integral_limit;
+    float kp, ki, kd, alpha;//PID参数
     //PID对象指针
-    std::unique_ptr<PIDFF> my_pid;
-    //防止中心抖动的低通滤波器
-    std::unique_ptr<LowPassFilter> lowpass;
+    std::unique_ptr<PID> my_pid;
+    float setpoint = 320.0f;//目标值
 
     // 用于速度计算
-    std::chrono::steady_clock::time_point last_pos_time_ = std::chrono::steady_clock::now();
-    float last_center_x_ = 0.0f;
-    bool last_center_x_valid_ = false;
+    std::chrono::steady_clock::time_point last_pos_time;
 };

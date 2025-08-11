@@ -10,10 +10,9 @@ def generate_launch_description():
         parameters=[
             {'kp': 0.001},
             {'ki': 0.0},
-            {'kd': 0.0},
-            {'kf': 0.0},
-            {'filter_alpha': 0.7},
-            {'system_delay': 0.05}
+            {'kd': 0.002},
+            {'filter_alpha': 0.8},
+            {'integral_limit': 10.0}
         ]
     )
 

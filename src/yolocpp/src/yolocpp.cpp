@@ -15,25 +15,19 @@ YoloCpp::YoloCpp() : rclcpp::Node("yolo_cpp")
     //模型的地址，传参
     this->declare_parameter<std::string>("engine_path", "/home/thunder/yolocpp/models/com.plan");
     this->declare_parameter<std::string>("serial_port", "/dev/ttyCH341USB0");
-    this->declare_parameter<double>("kp", 0.01f);
-    this->declare_parameter<double>("ki", 0.0f);
-    this->declare_parameter<double>("kd", 0.0f);
-    this->declare_parameter<double>("kf", 0.0f);
-    this->declare_parameter<double>("filter_alpha", 0.7f);//只是给防止中心抖动的LPF
-    this->declare_parameter<double>("output_min", -100.0f);
-    this->declare_parameter<double>("output_max", 100.0f);
-    this->declare_parameter<double>("system_delay", 0.05f);//估计系统总延迟
+    this->declare_parameter<float>("kp", 0.001f);
+    this->declare_parameter<float>("ki", 0.0f);
+    this->declare_parameter<float>("kd", 0.0f);
+    this->declare_parameter<float>("filter_alpha", 0.1f);//只是给防止中心抖动的LPF
+    this->declare_parameter<float>("integral_limit", 10.f);//估计系统总延迟
 
     this->get_parameter("engine_path", engine_path);
     this->get_parameter("serial_port", serial_port);
     this->get_parameter("kp", kp);
     this->get_parameter("ki", ki);
     this->get_parameter("kd", kd);
-    this->get_parameter("kf", kf);
     this->get_parameter("filter_alpha", alpha);
-    this->get_parameter("output_min", omin);
-    this->get_parameter("output_max", omax);
-    this->get_parameter("system_delay", system_delay);
+    this->get_parameter("integral_limit", integral_limit);
 
     gst_pipeline = 
         "v4l2src device=/dev/video0 ! image/jpeg,format=MJPG,width=640,height=480,framerate=30/1 "
@@ -62,9 +56,8 @@ YoloCpp::YoloCpp() : rclcpp::Node("yolo_cpp")
     }
 
     //初始化PID控制器
-    my_pid = std::make_unique<PIDFF>(kp, ki, kd, kf, omin, omax);
-    //LPF
-    lowpass = std::make_unique<LowPassFilter>(alpha);
+    my_pid = std::make_unique<PID>(kp, ki, kd, integral_limit, alpha);
+    last_pos_time = std::chrono::steady_clock::now();
 
     //启动循环线程
     loop_thread = std::thread(&YoloCpp::yolorun, this);
@@ -119,32 +112,34 @@ void YoloCpp::yolorun()
         {
             auto tlwh = tracks[0].tlwh;
             float center_x = tlwh[0] + tlwh[2] / 2.0f;
-            float center_y = tlwh[1] + tlwh[3] / 2.0f;
+            //float center_y = tlwh[1] + tlwh[3] / 2.0f;
 
-            // 计算速度（像素/秒），需要时间间隔
+            // 计算时间间隔
             auto now = std::chrono::steady_clock::now();
-            double dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_pos_time_).count();
+            //double dt = std::chrono::duration_cast<std::chrono::duration<double>>(now - last_pos_time).count();
+            double dt = 1.0f;
 
-            // 对测得的中心做低通滤波，降低检测抖动
-            //float center_x_filtered = lowpass->filter(center_x);
-
-            float setpoint = 320.0f;
-            // 调用 PID+前馈（传入测得速度与估计延迟）
+            //调用 PID
             //这里可能需要添负号//不用
-            float output = my_pid->compute(setpoint, center_x, system_delay);
+            //暂时没有使用计算的时间
+            float output = my_pid->compute(setpoint, center_x, dt);
 
             //发送
-            char buffer[64];
+            char buffer[32];
             //sprintf(buffer, "C %.2f, %.2f\n", center_x, center_y);
             sprintf(buffer, "C %.2f\n", output);
             my_serial->write(buffer);
-            RCLCPP_INFO(this->get_logger(), "center_x: %.2f", center_x);
+            RCLCPP_INFO(this->get_logger(), "center_x: %.2f, dt: %.5f", center_x, dt);
             RCLCPP_INFO(this->get_logger(), "Send: C %.2f", output);
+
+            //更新时间
+            last_pos_time = now;
         }
         else
         {
-            lowpass->reset();
             my_pid->reset();
+            //这里也要一直更新时间
+            last_pos_time = std::chrono::steady_clock::now();
         }
 
         //显示帧率
