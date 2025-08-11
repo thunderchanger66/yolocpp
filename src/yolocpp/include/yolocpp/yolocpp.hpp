@@ -7,6 +7,7 @@
 #include "BYTETracker.h"
 #include <thread>
 #include <atomic>
+#include "serial/serial.h"
 
 class YoloCpp : public rclcpp::Node
 {
@@ -18,7 +19,7 @@ public:
 private:
     std::string gst_pipeline;
     cv::VideoCapture cap;
-    std::string engine_path;
+    std::string engine_path;//
     int fps;
     std::unique_ptr<YoloDetector> detector;
     std::unique_ptr<BYTETracker> tracker;
@@ -26,4 +27,6 @@ private:
 
     std::thread loop_thread;
     //std::atomic<bool> running;//线程运行
+    std::unique_ptr<serial::Serial> my_serial;//串口
+    std::string serial_port;
 };

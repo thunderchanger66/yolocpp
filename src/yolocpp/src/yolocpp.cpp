@@ -6,6 +6,7 @@
 #include <chrono>
 #include <vector>
 #include <string>
+#include "serial/serial.h"
 
 YoloCpp::YoloCpp() : rclcpp::Node("yolo_cpp")
 {
@@ -14,6 +15,9 @@ YoloCpp::YoloCpp() : rclcpp::Node("yolo_cpp")
     //模型的地址，传参
     this->declare_parameter("engine_path", "/home/thunder/yolocpp/models/com.plan");
     this->get_parameter("engine_path", engine_path);
+    //串口号
+    this->declare_parameter("serial_port", "/dev/ttyCH341USB0");
+    this->get_parameter("serial_port", serial_port);
 
     gst_pipeline = 
         "v4l2src device=/dev/video0 ! image/jpeg,format=MJPG,width=640,height=480,framerate=30/1 "
@@ -33,6 +37,14 @@ YoloCpp::YoloCpp() : rclcpp::Node("yolo_cpp")
     //初始化ByteTrack跟踪器
     tracker = std::make_unique<BYTETracker>(fps, 30);
 
+    //初始化串口
+    my_serial = std::make_unique<serial::Serial>(serial_port, 115200, serial::Timeout::simpleTimeout(1000));
+    if(!my_serial->isOpen())
+    {
+        std::cerr << "Serial port open failed!" << std::endl;
+        return;
+    }
+
     //running = true;
     //启动循环线程
     loop_thread = std::thread(&YoloCpp::yolorun, this);
@@ -45,6 +57,7 @@ YoloCpp::~YoloCpp()
         loop_thread.join();
 
     cap.release();
+    my_serial->close();
     
     RCLCPP_INFO(this->get_logger(), "YoloCpp shutdown!");
 }
@@ -87,9 +100,12 @@ void YoloCpp::yolorun()
             auto tlwh = tracks[0].tlwh;
             float center_x = tlwh[0] + tlwh[2] / 2.0f;
             float center_y = tlwh[1] + tlwh[3] / 2.0f;
-            // char buffer[64];
-            // int len = snprintf(buffer, sizeof(buffer), "C %.2f, %.2f", center_x, center_y);
             //发送
+            char buffer[64];
+            //sprintf(buffer, "C %.2f, %.2f\n", center_x, center_y);
+            sprintf(buffer, "C %.2f\n", center_x);
+            my_serial->write(buffer);
+            //RCLCPP_INFO(this->get_logger(), "Send: C %.2f", center_x);
         }
 
         //显示帧率

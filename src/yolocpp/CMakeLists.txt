@@ -19,14 +19,16 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 include_directories(/usr/local/cuda/include)
 link_directories(/usr/local/cuda/lib64)
 
-#yolo and track library
+#yolo and track library ###serial
 include_directories(
   ~/yolocpp/libs/cppyolo/detect/include
   ~/yolocpp/libs/cppyolo/bytetrack/include
+  ~/yolocpp/libs/serial/include###
   include
 )
 link_directories(
   ~/yolocpp/libs/cppyolo/build
+  ~/yolocpp/libs/serial/build###
 )
 
 add_executable(yolocpp 
@@ -37,6 +39,7 @@ add_executable(yolocpp
 target_link_libraries(yolocpp
   bytetrack
   yolo_infer
+  serial###
   ${OpenCV_LIBS}
 )
 

@@ -45,9 +45,3 @@ target_link_libraries(yolo_infer nvinfer cudart nvonnxparser ${OpenCV_LIBS})
 # ======== main execute file ========
 # add_executable(main ${PROJECT_SOURCE_DIR}/main.cpp)
 # target_link_libraries(main bytetrack yolo_infer)
-
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GPIOD REQUIRED IMPORTED_TARGET libgpiod)
-
-add_executable(test ${PROJECT_SOURCE_DIR}/test.cpp ${PROJECT_SOURCE_DIR}/serial.cpp)
-target_link_libraries(test bytetrack yolo_infer PkgConfig::GPIOD)
